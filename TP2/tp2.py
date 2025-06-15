@@ -5,12 +5,15 @@ from cryptography.hazmat.backends import default_backend
 import os
 import time
 
+# Tabela S-Box usada para substituição de nibbles
 SBOX = {
     0x0: 0x9, 0x1: 0x4, 0x2: 0xA, 0x3: 0xB,
     0x4: 0xD, 0x5: 0x1, 0x6: 0x8, 0x7: 0x5,
     0x8: 0x6, 0x9: 0x2, 0xA: 0x0, 0xB: 0x3,
     0xC: 0xC, 0xD: 0xE, 0xE: 0xF, 0xF: 0x7
 }
+
+# Transforma uma string para bits (ASCII para binário)
 def string_em_bits(text):
     bits_final = ''
     for char in text:
@@ -25,6 +28,7 @@ def string_em_bits(text):
         bits_final += ascii_em_binario
     return bits_final
 
+# Divide bits em grupos de 4 (nibbles)
 def definicao_nibbles(bits):
     lista_nibbles = []
     i = 0
@@ -41,14 +45,17 @@ def definicao_nibbles(bits):
             i += 1
     return lista_nibbles
 
+# Converte lista de nibbles em matriz 2x2
 def nibbles_em_matriz(nibble):
     matriz = [[nibble[0],nibble[1]],[nibble[2],nibble[3]]]
     return matriz
 
+# Converte matriz 2x2 em lista de nibbles
 def matriz_em_nibbles(matriz):
    nibbles = [matriz[0][0],matriz[0][1],matriz[1][0],matriz[1][1],]
    return nibbles
 
+# XOR entre mensagem e chave
 def add_round_key(matriz_mensagem, matriz_chave):
     round = [
         [matriz_mensagem[0][0] ^ matriz_chave[0][0], matriz_mensagem[0][1] ^ matriz_chave[0][1]],
@@ -56,6 +63,7 @@ def add_round_key(matriz_mensagem, matriz_chave):
     ]
     return round
 
+# Substituição de nibbles via SBOX
 def sub_nibbles(matriz):
     novos_nibbles = [
         [SBOX[matriz[0][0]], SBOX[matriz[0][1]]],
@@ -63,6 +71,7 @@ def sub_nibbles(matriz):
     ]
     return novos_nibbles
 
+# Inversão da segunda linha
 def shift_rows(state):
     matriz_invertida = [
         [state[0][0], state[0][1]],
@@ -70,6 +79,7 @@ def shift_rows(state):
     ]
     return matriz_invertida
 
+# Multiplicação no campo finito GF(2^4)
 def multiplicacao_campo_finito(num1, num2):
     resultado = 0
     for i in range(4):
@@ -96,6 +106,7 @@ def multiplicacao_campo_finito(num1, num2):
 
     return resultado
 
+# Operação MixColumns
 def mix_columns(nibbles):
     n1, n2 = nibbles[0]
     n3, n4 = nibbles[1]
@@ -105,6 +116,7 @@ def mix_columns(nibbles):
 
     return nibbles_campo_finito
 
+# Expansão da chave de 16 bits
 def key_expansion(nibbles_chave):
     w = [nibbles_chave[0], nibbles_chave[1], nibbles_chave[2], nibbles_chave[3]]
 
@@ -136,10 +148,12 @@ def key_expansion(nibbles_chave):
 
     return round_keys
 
+# Representação em hexadecimal
 def matriz_em_hex(matriz):
     nibbles = matriz_em_nibbles(matriz)
     return ''.join(f'{n:X}' for n in nibbles)
 
+# Algoritmo de encriptação S-AES
 def encriptacao(lista_nibble, chave_nibble):
     resultado = nibbles_em_matriz(lista_nibble)
     rodada_chave = key_expansion(chave_nibble)
